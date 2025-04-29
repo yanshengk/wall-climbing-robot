@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Wall-climbing Robot Control Interface</title>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <link rel="stylesheet" href="styles.css" />
+        <script type="module" src="script.js"></script>
+    </head>
+    <body>
+        <main class="robot-control">
+            <div class="video-feed">
+                <h2>Camera</h2>
+                <video id="videoFeed" autoplay playsinline>
+                Your browser doesn't support video playback.
+                </video>
+            </div>
+
+            <div class="controls">
+                <div class="led-controls">
+                    <h2>LED Control</h2>
+                    <button id="ledFront" class="btn" disabled>Front LED OFF</button>
+                </div>
+
+                <div class="speed-control">
+                    <h2>Power Control</h2>
+                    <div class="slider-container">
+                        <input type="range" id="powerControl" min="0" max="100" value="0">
+                        <span id="powerValue">0%</span>
+                    </div>
+                </div>
+
+                <div class="status">
+                    <h2>Robot Status</h2>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="label">Connection:</span>
+                            <span id="connectionStatus"></span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Front LED:</span>
+                            <span id="frontLedStatus"></span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Motion:</span>
+                            <span id="motionStatus"></span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">EDF PWM:</span>
+                            <span id="EdfStatus"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </body>
+</html>
