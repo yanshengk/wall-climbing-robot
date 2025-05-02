@@ -9,24 +9,25 @@
     </head>
     <body>
         <main class="robot-control">
-            <div class="video-feed">
+            <h1 class="main-title">Wall-climbing Robot Control Interface</h1>
+            
+            <div class="camera-feed">
                 <h2>Camera</h2>
-                <video id="videoFeed" autoplay playsinline>
-                Your browser doesn't support video playback.
-                </video>
+                <img id="cameraFeed" alt="ESP32-CAM stream"  width="800" height="600" />
+                <button id="captureBtn" class="btn">Capture Image</button>
             </div>
 
             <div class="controls">
                 <div class="led-controls">
-                    <h2>LED Control</h2>
-                    <button id="ledFront" class="btn" disabled>Front LED OFF</button>
+                    <h2>Front LED</h2>
+                    <button id="frontLedBtn" class="btn" disabled>Front LED Switch</button>
                 </div>
 
-                <div class="speed-control">
-                    <h2>Power Control</h2>
+                <div class="edf-controls">
+                    <h2>EDF Power</h2>
                     <div class="slider-container">
-                        <input type="range" id="powerControl" min="0" max="100" value="0">
-                        <span id="powerValue">0%</span>
+                        <input type="range" id="edfPowerControl" min="0" max="100" value="0" disabled>
+                        <span id="edfPowerValue"></span>
                     </div>
                 </div>
 
@@ -42,14 +43,19 @@
                             <span id="frontLedStatus"></span>
                         </div>
                         <div class="status-item">
+                            <span class="label">EDF:</span>
+                            <span id="edfStatus"></span>
+                        </div>
+                        <div class="status-item">
                             <span class="label">Motion:</span>
                             <span id="motionStatus"></span>
                         </div>
-                        <div class="status-item">
-                            <span class="label">EDF PWM:</span>
-                            <span id="EdfStatus"></span>
-                        </div>
                     </div>
+                </div>
+
+                <div class="movement-note">
+                    <p>Use arrow keys to control robot movement:</p>
+                    <p>↑ (forward) ↓ (backward) ← (left) → (right)</p>
                 </div>
             </div>
         </main>

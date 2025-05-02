@@ -37,8 +37,8 @@ async def handler(ws, path=None):
             print("UI client disconnected")
 
 async def main():
-    async with websockets.serve(handler, "0.0.0.0", 81):
-        print("WebSocket broker listening on port 81")
+    async with websockets.serve(handler, "0.0.0.0", 88):
+        print("WebSocket broker listening on port 88")
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":

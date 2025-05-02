@@ -1,113 +1,114 @@
-// const ws = new WebSocket("ws://192.168.50.137:81/");
-const ws = new WebSocket("ws://localhost:81/");
-// const ws_binary = new WebSocket("ws://192.168.50.137:81/");
+// WebSocket connection
+const webSocket = new WebSocket("ws://localhost:88/");
+webSocket.binaryType = "arraybuffer";
 
-ws.binaryType = "arraybuffer";
+// Camera feed handle
+const cameraFeed = document.getElementById("cameraFeed");
+const cameraUrl = "http://192.168.1.100:81/stream";
+const captureBtn = document.getElementById("captureBtn");
+const captureUrl = "http://192.168.1.100/capture";
 
-// Video feed configuration
-const videoFeed = document.getElementById("videoFeed");
-const videoUrl = "http://your-ip-camera-url/stream"; // Replace with actual IP camera URL
+// Front LED control handle
+const frontLedBtn = document.getElementById("frontLedBtn");
+let frontLedLogic = false;
 
-// LED control
-const ledFront = document.getElementById("ledFront");
-let frontLed = false;
+// EDF Power control handle
+const edfPowerControl = document.getElementById("edfPowerControl");
+const edfPowerValue = document.getElementById("edfPowerValue");
 
-// Power control
-const powerControl = document.getElementById("powerControl");
-const powerValue = document.getElementById("powerValue");
-
-// Status elements
+// Robot Status handle
 const connectionStatus = document.getElementById("connectionStatus");
 const frontLedStatus = document.getElementById("frontLedStatus");
+const edfStatus = document.getElementById("edfStatus");
 const motionStatus = document.getElementById("motionStatus");
-const EdfStatus = document.getElementById("EdfStatus");
 
 const robotStatus = {
-    connection: "NOT CONNECTED",
+    connection: "DISCONNECTED",
     frontLed: "-",
-    motion: "-",
-    edf: "-"
+    edfPower: "-",
+    motion: "-"
+};
+let retrieveStatus;
+
+webSocket.onopen = function () {
+    webSocket.send("UI");
+    console.log("[WebSocket] Connected to the server");
+    sendMessage("retrieve", "status");
+    retrieveStatus = true;
 };
 
-ws.onopen = function () {
-    ws.send("UI");
-    console.log("Connected to the server");
-    // Enable buttons once connection is established
-    ledFront.disabled = false;
-};
-
-ws.onmessage = function (event) {
+webSocket.onmessage = function (event) {
     let msg;
     try {
         msg = JSON.parse(event.data);
-    } catch (err) {
-        console.warn("Malformed JSON:", event.data);
+    } catch (error) {
+        console.error("[WebSocket] Malformed JSON:", event.data);
         return;
     }
 
-    // console.log(msg instanceof Object);
-
+    // { "type": "connection", "content": "connected" }
     switch (msg.type) {
         case "connection":
-            // { "type": "connection", "content": "connected" }
             robotStatus.connection = msg.content.toUpperCase();
             break;
 
-        case "led":
+        case "frontLed":
             robotStatus.frontLed = msg.content.toUpperCase();
+            break;
+
+        case "edfPower":
+            robotStatus.edfPower = msg.content.toUpperCase();
             break;
 
         case "motion":
             robotStatus.motion = msg.content.toUpperCase();
             break;
-
-        case "edf":
-            robotStatus.edf = msg.content.toUpperCase();
-            break;
-
-        // console.log("Message from Arduino: " + event.data);
     };
+    console.log(`[WebSocket] Received message: ${msg.type}, ${msg.content}`);
+
+    updateRobotStatus();
 }
 
-ws.onerror = function (error) {
-    console.error("WebSocket error: ", error);
+webSocket.onerror = function (error) {
+    console.error("[WebSocket] WebSocket error: ", error);
 };
 
-ws.onclose = function () {
-    console.warn("WebSocket connection closed");
+webSocket.onclose = function () {
+    console.warn("[WebSocket] WebSocket connection closed");
 }
 
-// Initialize video feed
-async function initializeVideo() {
+async function initialiseCamera() {
     try {
-        // Replace this with actual video stream implementation
-        // videoFeed.src = videoUrl;
-        console.log("Video feed initialized");
+        cameraFeed.src = cameraUrl;
+        console.log("Camera feed initialized");
     } catch (error) {
-        console.error("Error initializing video feed:", error);
+        console.error("Error initialising camera feed:", error);
     }
 }
 
-// LED control handler
-ledFront.addEventListener("click", () => {
-    frontLed = !frontLed;
-    ledFront.classList.toggle("active");
-    if (frontLed) {
-        ledFront.innerHTML = "Front LED ON";
-    } else {
-        ledFront.innerHTML = "Front LED OFF";
-    }
-    sendMessage("led", `${frontLed}`);
+async function captureAndSave() {
+    const res = await fetch(captureUrl);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `capture-${Date.now()}.jpg`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+captureBtn.addEventListener("click", captureAndSave);
+
+// Front LED control handler
+frontLedBtn.addEventListener("click", () => {
+    frontLedLogic = !frontLedLogic;
+    sendMessage("frontLed", `${frontLedLogic}`);
 });
 
-// Power control hanfler
-powerControl.addEventListener("input", () => {
-    const v = powerControl.value;
-    powerValue.textContent = `${v}%`;
-
-    const value = parseInt(powerControl.value, 10);
-
-    sendValue(value);
+// EDF Power control handler
+edfPowerControl.addEventListener("input", () => {
+    const value = parseInt(edfPowerControl.value, 10);
+    sendPowerValue(value);
 });
 
 // Keyboard control handlers
@@ -118,12 +119,15 @@ document.addEventListener("keydown", (event) => {
         case "ArrowUp":
             sendMessage("motion", "forward");
             break;
+
         case "ArrowDown":
             sendMessage("motion", "backward");
             break;
+
         case "ArrowLeft":
             sendMessage("motion", "left");
             break;
+
         case "ArrowRight":
             sendMessage("motion", "right");
             break;
@@ -142,34 +146,62 @@ document.addEventListener("keyup", (event) => {
 });
 
 function sendMessage(type, content) {
-    if (ws.readyState === WebSocket.OPEN) {
-        ws.send(`{"type":"${type}", "content":"${content}"}`);
-        console.log("Sent command: " + type + ", " + content);
+    if (webSocket.readyState === WebSocket.OPEN) {
+        webSocket.send(`{"type":"${type}", "content":"${content}"}`);
+        console.log("[WebSocket] Sent message: " + type + ", " + content);
     } else {
-        console.warn("WebSocket not connected. Command not sent: " + content);
+        console.warn("[WebSocket] WebSocket not connected. Message not sent: " + content);
     }
 }
 
-function sendValue(value) {
+function sendPowerValue(value) {
     const buf = new Uint8Array([value]);
-    if (ws.readyState === WebSocket.OPEN) {
-        ws.send(buf.buffer);
-        console.log("Sent value: " + value);
+    if (webSocket.readyState === WebSocket.OPEN) {
+        webSocket.send(buf.buffer);
+        console.log("[WebSocket] Sent power value: " + value);
     } else {
-        console.warn("WebSocket not connected. Value not sent: " + value);
+        console.warn("[WebSocket] WebSocket not connected. Power value not sent: " + value);
     }
 }
 
 // Status update function
 function updateRobotStatus() {
     connectionStatus.textContent = robotStatus.connection;
+    if (robotStatus.connection == "CONNECTED") {
+        frontLedBtn.disabled = false;
+        edfPowerControl.disabled = false;
+    } else {
+        frontLedBtn.disabled = true;
+        edfPowerControl.disabled = true;
+    }
+
     frontLedStatus.textContent = robotStatus.frontLed;
+    if (robotStatus.frontLed == "ON") {
+        frontLedLogic = true;
+        frontLedBtn.classList.add("active");
+    } else {
+        frontLedLogic = false;
+        frontLedBtn.classList.remove("active");
+    }
+
+    if (parseInt(robotStatus.edfPower) > 5) {
+        edfStatus.textContent = "RUNNING";
+    }
+    else if (parseInt(robotStatus.edfPower) <= 5) {
+        edfStatus.textContent = "STOP";
+    }
+    else {
+        edfStatus.textContent = robotStatus.edfPower;
+    }
+
     motionStatus.textContent = robotStatus.motion;
-    EdfStatus.textContent = robotStatus.edf;
+
+    edfPowerValue.textContent = robotStatus.edfPower + " %";
+    if (retrieveStatus && robotStatus.edfPower != "-") {
+        edfPowerControl.value = robotStatus.edfPower;
+        retrieveStatus = false;
+    }
 }
 
-// Initialize everything
-initializeVideo();
-setInterval(updateRobotStatus, 50); // Update status every 0.05 second
-
-// document.onload();
+initialiseCamera();
+updateRobotStatus();
