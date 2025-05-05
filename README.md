@@ -1,12 +1,6 @@
 # Wall-climbing Robot for Inspection
+
 ## Changelog
-
-### 20250429 - Beta 1
-Arduino UNO R4 WiFi
-- Basic control for LEDs, EDFs, and servo motors.
-
-UI
-- Basic control without camera feed.
 
 ### 20250502 - Version 1
 Arduino UNO R4 WiFi
@@ -28,3 +22,10 @@ UI
 - Added a note for robot movement.
 - Robot status will be updated only when changes occur.
 - Resolved issue: Front LED status and EDF Power value not updated on load/refresh.
+
+### 20250429 - Beta 1
+Arduino UNO R4 WiFi
+- Basic control for LEDs, EDFs, and servo motors.
+
+UI
+- Basic control without camera feed.
