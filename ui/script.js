@@ -1,12 +1,14 @@
 // WebSocket connection
-const webSocket = new WebSocket("ws://localhost:88/");
+const webSocket = new WebSocket("ws://192.168.1.102:88/");
 webSocket.binaryType = "arraybuffer";
 
 // Camera feed handle
+const cameraIpAddress = "192.168.1.100";
 const cameraFeed = document.getElementById("cameraFeed");
-const cameraUrl = "http://192.168.1.100:81/stream";
+const cameraUrl = `http://${cameraIpAddress}:81/stream`;
+// const cameraUrl = `http://192.168.1.102:8080/stream`;
 const captureBtn = document.getElementById("captureBtn");
-const captureUrl = "http://192.168.1.100/capture";
+const captureUrl = `http://${cameraIpAddress}/capture`;
 
 // Front LED control handle
 const frontLedBtn = document.getElementById("frontLedBtn");
